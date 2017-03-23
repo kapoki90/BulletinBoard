@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="kr.koreait.Kboard">
+
+<insert id="insert" parameterType="kr.koreait.Kboard.vo.KboardVO">
+	insert into KBOARD(idx,ref,lev,seq,name, password,title,content,hit,ip)
+	values (Kboard_idx_seq.nextval,Kboard_idx_seq.currval,0,0,#{name},#{password},#{title},#{content},#{hit},#{ip})
+</insert>
+
+<select id="selectCount" resultType="int">
+	select count(*) from KBOARD
+</select>
+
+<select id="selectList" parameterType="java.util.HashMap" resultType="kr.koreait.Kboard.vo.KboardVO">
+<!--  	<![CDATA[
+		select * from (select rownum rnum, T.* from (select * from KBOARD order by idx desc)
+		T where rownum <= #{endNo}) where rnum >= #{startNo} 
+	]]>  -->
+	<![CDATA[
+		select * from (select rownum rnum, T.* from (select * from KBOARD order by ref desc, seq)
+		T where rownum <= #{endNo}) where rnum >= #{startNo} 
+	]]>  
+	<!-- select * from KBOARD -->
+</select>
+
+<select id="allList" resultType="kr.koreait.Kboard.vo.KboardVO">
+	select * from KBOARD
+</select>
+
+<select id="selectByidx" resultType="kr.koreait.Kboard.vo.KboardVO">
+	select * from KBOARD where idx=#{idx}
+</select>
+
+<delete id="delete" parameterType="int">
+	delete from KBOARD where idx = #{idx}
+</delete>
+
+<delete id="update" parameterType="kr.koreait.Kboard.vo.KboardVO">
+	update KBOARD set title = #{title}, content = #{content} where idx = #{idx}
+</delete>
+
+<!-- 새 서브 카테고리가 삽입될 위치를 잡아준다. -->
+<update id="putsubcatogory" parameterType="java.util.HashMap">
+	<!-- ref와 seq는 테이블의 필드 이름이고 #{ref}와 {seq}는 HashMap 객체를 통해 전달받은 데이터이다. -->
+	<![CDATA[
+		update kboard set seq = seq + 1 where ref = #{ref} and seq >= #{seq}
+	]]>
+</update>
+
+<!-- 서브 카테고리 한 건을 테이블에 저장한다. -->
+<insert id="reply" parameterType="kr.koreait.Kboard.vo.KboardVO">
+	insert into KBOARD(idx,ref,lev,seq,name, password,title,content,hit,ip)
+	values (kboard_idx_seq.nextval, #{ref}, #{lev}, #{seq},#{name},#{password},#{title},#{content},#{hit},#{ip})
+</insert>
+
+<!-- 부모글 테이블에서 조회수를 1증가 시킨다. -->
+<update id="increment" parameterType="int">
+	update KBOARD set hit = hit + 1 where idx = #{idx}
+</update>
+
+<!-- 삭제할 카테고리 목록을 얻어온다. -->
+<select id="deleteSelect" parameterType="kr.koreait.Kboard.vo.KboardVO" 
+															resultType="kr.koreait.Kboard.vo.KboardVO">
+	<![CDATA[														
+	select * from KBOARD where ref = #{ref} and lev > #{lev} and seq > #{seq} and idx > #{idx}
+	or idx = #{idx} order by ref desc, seq
+	]]>
+</select>
+
+</mapper>
